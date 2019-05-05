@@ -1,0 +1,24 @@
+Report Flycheck errors for a Magit Diff buffer.
+
+Run ~M-x magit-diff-flycheck~~ in a magit-diff buffer to display a
+filtered list of Flycheck errors for the added/modified lines only.
+
+This is primarily meant to be used on legacy projects where you do
+not want to see errors for the whole file but only for the added/modified
+lines.
+
+* Install
+** Main dependencies
++ ~magit~
++ ~flycheck~
+
+** Extra Dependencies
++ ~seq~
+
+* Configuration
+| Variable                              | Notes                                             | Default |
+|---------------------------------------+---------------------------------------------------+---------|
+| ~magit-diff-flycheck-inhibit-message~ | If non-nil, disable message output while running. | ~t~     |
+
+* Usage
+Open up a Magit Diff buffer and run ~M-x magit-diff-flycheck~.
