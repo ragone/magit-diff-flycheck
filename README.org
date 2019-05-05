@@ -1,6 +1,6 @@
 Report Flycheck errors for a Magit Diff buffer.
 
-Run ~M-x magit-diff-flycheck~~ in a magit-diff buffer to display a
+Run ~M-x magit-diff-flycheck~ in a magit-diff buffer to display a
 filtered list of Flycheck errors for the added/modified lines only.
 
 This is primarily meant to be used on legacy projects where you do
