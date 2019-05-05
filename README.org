@@ -1,4 +1,4 @@
-Report Flycheck errors for a Magit Diff buffer.
+[[file:example.gif]]
 
 Run ~M-x magit-diff-flycheck~ in a magit-diff buffer to display a
 filtered list of Flycheck errors for the added/modified lines only.
@@ -21,4 +21,4 @@ lines.
 | ~magit-diff-flycheck-inhibit-message~ | If non-nil, disable message output while running. | ~t~     |
 
 * Usage
-Open up a Magit Diff buffer and run ~M-x magit-diff-flycheck~.
+Open up a magit-diff buffer and run ~M-x magit-diff-flycheck~.
