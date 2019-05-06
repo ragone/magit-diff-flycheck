@@ -43,6 +43,9 @@
 (defvar magit-diff-flycheck-inhibit-message t
   "If non-nil, disable message output while running.")
 
+(defvar magit-diff-flycheck-context 0
+  "Lines of context from diff when filtering errors.")
+
 ;;;###autoload
 (defun magit-diff-flycheck ()
   "Run flycheck on all added lines in `magit-diff-mode'."
@@ -55,7 +58,7 @@
 
 (defun magit-diff-flycheck--setup ()
   "Setup before running the program."
-  (magit-diff-set-context (lambda (_num) 0))
+  (magit-diff-set-context (lambda (_num) magit-diff-flycheck-context))
   (if magit-diff-flycheck-inhibit-message
     (setq inhibit-message t)))
 
