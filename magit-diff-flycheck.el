@@ -68,7 +68,7 @@ is set to the symbol `files'."
 
 ;;;###autoload
 (defun magit-diff-flycheck (scope)
-  "Run flycheck on all added lines in `magit-diff-mode'."
+  "Run flycheck for SCOPE in `magit-diff-mode'."
   (interactive (list (if current-prefix-arg
                          (intern (completing-read "Scope: "
                                                   magit-diff-flycheck--scope-list
