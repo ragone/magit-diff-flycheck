@@ -5,7 +5,7 @@ filtered list of Flycheck errors for the added/modified lines only.
 
 Use can also run the command with a prefix which will prompt you for
 the scope of the errors, eg. ~C-u M-x magit-diff-flycheck~.
-
+~files~
 This is primarily meant to be used on legacy projects where you do
 not want to see errors for the whole file but only for the added/modified
 lines.
@@ -19,11 +19,11 @@ lines.
 + ~seq~
 
 * Configuration
-| Variable                              | Notes                                             | Default  |
-|---------------------------------------+---------------------------------------------------+----------|
-| ~magit-diff-flycheck-inhibit-message~ | If non-nil, disable message output while running. | ~t~      |
-| ~magit-diff-flycheck-default-scope~   | The default scope for filtering errors.           | ~'files~ |
-| ~magit-diff-flycheck-context~         | Lines of context for diff when filtering errors.  | ~0~      |
+| Variable                              | Notes                                             | Default |
+|---------------------------------------+---------------------------------------------------+---------|
+| ~magit-diff-flycheck-inhibit-message~ | If non-nil, disable message output while running. | ~t~     |
+| ~magit-diff-flycheck-default-scope~   | The default scope for filtering errors.           | ~lines~ |
+| ~magit-diff-flycheck-context~         | Lines of context for diff when filtering errors.  | ~0~     |
 
 * Usage
 Open up a magit-diff buffer and run ~M-x magit-diff-flycheck~.
