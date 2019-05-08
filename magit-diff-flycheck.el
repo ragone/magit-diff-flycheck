@@ -44,26 +44,47 @@
   "If non-nil, disable message output while running.")
 
 (defvar magit-diff-flycheck-context 0
-  "Lines of context from diff when filtering errors.")
+  "Lines of context for diff when filtering errors.
+
+This is ignored if `magit-diff-flycheck-default-scope'
+is set to the symbol `files'.")
+
+(defvar magit-diff-flycheck-default-scope 'lines
+  "The default scope for filtering errors.
+
+The value can be either `lines' or `files'.")
+
+(defvar magit-diff-flycheck--scope nil
+  "The current scope for filtering errors.")
+
+(defvar magit-diff-flycheck--scope-list '(lines
+                                          files)
+  "The list of scopes for filtering errors.")
 
 ;;;###autoload
-(defun magit-diff-flycheck ()
+(defun magit-diff-flycheck (scope)
   "Run flycheck on all added lines in `magit-diff-mode'."
-  (interactive)
+  (interactive (list (if current-prefix-arg
+                         (intern (completing-read "Scope: "
+                                                  magit-diff-flycheck--scope-list
+                                                  nil
+                                                  t))
+                       magit-diff-flycheck-default-scope)))
   (unless (derived-mode-p 'magit-diff-mode)
-    (user-error "Not a Magit Diff buffer"))
+    (user-error "Not in magit-diff-mode"))
+  (setq magit-diff-flycheck--scope scope)
   (magit-diff-flycheck--setup)
   (magit-diff-flycheck--run)
   (magit-diff-flycheck--teardown))
 
 (defun magit-diff-flycheck--setup ()
-  "Setup before running the program."
+  "Setup before running."
   (magit-diff-set-context (lambda (_num) magit-diff-flycheck-context))
   (if magit-diff-flycheck-inhibit-message
     (setq inhibit-message t)))
 
 (defun magit-diff-flycheck--teardown ()
-  "Teardown after running the program."
+  "Teardown after running."
   (magit-diff-default-context)
   (if magit-diff-flycheck-inhibit-message
     (setq inhibit-message nil)))
@@ -118,9 +139,12 @@
 
 (defun magit-diff-flycheck--filter-errors (errors file-section)
   "Filter ERRORS for FILE-SECTION."
-  (seq-filter (lambda (err)
-                (magit-diff-flycheck--contained-in-diff-p err (oref file-section children)))
-              errors))
+  (pcase magit-diff-flycheck--scope
+    ('lines (seq-filter (lambda (err)
+                          (magit-diff-flycheck--contained-in-diff-p err (oref file-section children)))
+                        errors))
+    ('files errors)
+    (_ (error "Scope is not set"))))
 
 (defun magit-diff-flycheck--flycheck-collect-errors (file-section)
   "Collect errors for FILE-SECTION."

@@ -1,5 +1,10 @@
 # -*- mode: org -*-
 
+* v0.1.1    2019-08-05
+
+- Added `magit-diff-flycheck-context`
+- Added `magit-diff-flycheck-default-scope`
+
 * v0.1.0    2019-05-05
 
 - Initial beta release.
