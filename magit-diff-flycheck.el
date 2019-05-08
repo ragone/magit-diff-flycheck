@@ -86,13 +86,13 @@ is set to the symbol `files'."
   "Setup before running."
   (magit-diff-set-context (lambda (_num) magit-diff-flycheck-context))
   (if magit-diff-flycheck-inhibit-message
-    (setq inhibit-message t)))
+      (setq inhibit-message t)))
 
 (defun magit-diff-flycheck--teardown ()
   "Teardown after running."
   (magit-diff-default-context)
   (if magit-diff-flycheck-inhibit-message
-    (setq inhibit-message nil)))
+      (setq inhibit-message nil)))
 
 (defun magit-diff-flycheck--run ()
   "Run the checkers on the files in the diff buffer."
@@ -108,7 +108,8 @@ is set to the symbol `files'."
          (buffer (first (magit-diff-visit-file--noselect filename))))
     (with-current-buffer buffer
       (add-hook 'flycheck-after-syntax-check-hook
-                (apply-partially #'magit-diff-flycheck--flycheck-collect-errors file-section)
+                (apply-partially #'magit-diff-flycheck--flycheck-collect-errors
+                                 file-section)
                 nil
                 t)
       ;; Disable threshold to get all errors
@@ -126,10 +127,10 @@ is set to the symbol `files'."
   (let ((mode-active (derived-mode-p 'magit-diff-flycheck-error-list-mode))
         (file (flycheck-error-filename err)))
     (if mode-active
-      (setf (flycheck-error-filename err) nil))
+        (setf (flycheck-error-filename err) nil))
     (apply fn (list err))
     (if mode-active
-      (setf (flycheck-error-filename err) file))))
+        (setf (flycheck-error-filename err) file))))
 
 (defun magit-diff-flycheck--contained-in-diff-p (err hunk-sections)
   "Return non-nil if ERR is contained in any of the HUNK-SECTIONS."
@@ -146,23 +147,31 @@ is set to the symbol `files'."
   "Filter ERRORS for FILE-SECTION."
   (pcase magit-diff-flycheck--scope
     ('lines (seq-filter (lambda (err)
-                          (magit-diff-flycheck--contained-in-diff-p err (oref file-section children)))
+                          (magit-diff-flycheck--contained-in-diff-p
+                           err
+                           (oref file-section children)))
                         errors))
     ('files errors)
     (_ (error "Scope is not set"))))
 
+(defun magit-diff-flycheck--get-errors (filename)
+  "Get errors from `flycheck-current-errors' and add FILENAME if missing."
+  (seq-map (lambda (err)
+             (unless (flycheck-error-filename err)
+               (setf (flycheck-error-filename err) filename))
+             err)
+           flycheck-current-errors))
+
 (defun magit-diff-flycheck--flycheck-collect-errors (file-section)
   "Collect errors for FILE-SECTION."
   (let* ((filename (oref file-section value))
-         (errors (seq-map (lambda (err)
-                            (unless (flycheck-error-filename err)
-                              (setf (flycheck-error-filename err) filename))
-                            err)
-                          flycheck-current-errors))
+         (errors (magit-diff-flycheck--get-errors filename))
          (filtered (magit-diff-flycheck--filter-errors errors file-section)))
-    (setq magit-diff-flycheck--current-errors (append magit-diff-flycheck--current-errors filtered))
+    (setq magit-diff-flycheck--current-errors
+          (append magit-diff-flycheck--current-errors filtered))
     (remove-hook 'flycheck-after-syntax-check-hook
-                 (apply-partially #'magit-diff-flycheck--flycheck-collect-errors file-section)
+                 (apply-partially #'magit-diff-flycheck--flycheck-collect-errors
+                                  file-section)
                  t)
     (flycheck-error-list-refresh)))
 
@@ -177,7 +186,8 @@ is set to the symbol `files'."
 
 (defun magit-diff-flycheck--error-list-entries ()
   "Create the entries for the error list."
-  (let ((filtered (flycheck-error-list-apply-filter magit-diff-flycheck--current-errors)))
+  (let ((filtered (flycheck-error-list-apply-filter
+                   magit-diff-flycheck--current-errors)))
     (seq-map #'flycheck-error-list-make-entry filtered)))
 
 (define-derived-mode magit-diff-flycheck-error-list-mode flycheck-error-list-mode
@@ -190,7 +200,8 @@ is set to the symbol `files'."
         tabulated-list-padding flycheck-error-list-padding
         tabulated-list-entries #'magit-diff-flycheck--error-list-entries
         mode-line-buffer-identification flycheck-error-list-mode-line)
-  (advice-add #'flycheck-jump-to-error :around #'magit-diff-flycheck--remove-filename)
+  (advice-add #'flycheck-jump-to-error
+              :around #'magit-diff-flycheck--remove-filename)
   (tabulated-list-init-header))
 
 (provide 'magit-diff-flycheck)
