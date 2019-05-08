@@ -37,22 +37,27 @@
 (require 'flycheck)
 (require 'seq)
 
-(defvar magit-diff-flycheck-current-errors nil
-  "List of `flycheck-error' for all the buffers.")
+(defcustom magit-diff-flycheck-inhibit-message t
+  "If non-nil, disable message output while running."
+  :group 'magit-diff
+  :type 'boolean)
 
-(defvar magit-diff-flycheck-inhibit-message t
-  "If non-nil, disable message output while running.")
-
-(defvar magit-diff-flycheck-context 0
+(defcustom magit-diff-flycheck-context 0
   "Lines of context for diff when filtering errors.
 
 This is ignored if `magit-diff-flycheck-default-scope'
-is set to the symbol `files'.")
+is set to the symbol `files'."
+  :group 'magit-diff
+  :type 'integer)
 
-(defvar magit-diff-flycheck-default-scope 'lines
-  "The default scope for filtering errors.
+(defcustom magit-diff-flycheck-default-scope 'lines
+  "The default scope for filtering errors."
+  :group 'magit-diff
+  :type '(choice (const :tag "Files" files)
+                 (const :tag "Lines" lines)))
 
-The value can be either `lines' or `files'.")
+(defvar magit-diff-flycheck--current-errors nil
+  "List of `flycheck-error' for all the buffers.")
 
 (defvar magit-diff-flycheck--scope nil
   "The current scope for filtering errors.")
@@ -114,7 +119,7 @@ The value can be either `lines' or `files'.")
 
 (defun magit-diff-flycheck-clear-errors ()
   "Clear the displayed errors."
-  (setq magit-diff-flycheck-current-errors nil))
+  (setq magit-diff-flycheck--current-errors nil))
 
 (defun magit-diff-flycheck--remove-filename (fn err)
   "Remove the filename from ERR, run FN and revert the filename."
@@ -155,7 +160,7 @@ The value can be either `lines' or `files'.")
                             err)
                           flycheck-current-errors))
          (filtered (magit-diff-flycheck--filter-errors errors file-section)))
-    (setq magit-diff-flycheck-current-errors (append magit-diff-flycheck-current-errors filtered))
+    (setq magit-diff-flycheck--current-errors (append magit-diff-flycheck--current-errors filtered))
     (remove-hook 'flycheck-after-syntax-check-hook
                  (apply-partially #'magit-diff-flycheck--flycheck-collect-errors file-section)
                  t)
@@ -172,7 +177,7 @@ The value can be either `lines' or `files'.")
 
 (defun magit-diff-flycheck--error-list-entries ()
   "Create the entries for the error list."
-  (let ((filtered (flycheck-error-list-apply-filter magit-diff-flycheck-current-errors)))
+  (let ((filtered (flycheck-error-list-apply-filter magit-diff-flycheck--current-errors)))
     (seq-map #'flycheck-error-list-make-entry filtered)))
 
 (define-derived-mode magit-diff-flycheck-error-list-mode flycheck-error-list-mode
