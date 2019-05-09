@@ -105,7 +105,7 @@ is set to the symbol `files'."
 (defun magit-diff-flycheck-file-section (file-section)
   "Run flycheck on FILE-SECTION."
   (let* ((filename (oref file-section value))
-         (buffer (first (magit-diff-visit-file--noselect filename))))
+         (buffer (magit-diff-visit-file filename)))
     (with-current-buffer buffer
       (add-hook 'flycheck-after-syntax-check-hook
                 (apply-partially #'magit-diff-flycheck--flycheck-collect-errors
