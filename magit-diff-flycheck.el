@@ -83,8 +83,9 @@ is set to the symbol `files'."
     (user-error "Not in magit-diff-mode"))
   (setq magit-diff-flycheck--scope scope)
   (magit-diff-flycheck--setup)
-  (magit-diff-flycheck--run)
-  (magit-diff-flycheck--teardown))
+  (unwind-protect
+      (magit-diff-flycheck--run)
+    (magit-diff-flycheck--teardown)))
 
 (defun magit-diff-flycheck--setup ()
   "Setup before running."
