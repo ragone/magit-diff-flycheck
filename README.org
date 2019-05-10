@@ -5,7 +5,7 @@ filtered list of Flycheck errors for the added/modified lines only.
 
 Use can also run the command with a prefix which will prompt you for
 the scope of the errors, eg. ~C-u M-x magit-diff-flycheck~.
-~files~
+
 This is primarily meant to be used on legacy projects where you do
 not want to see errors for the whole file but only for the added/modified
 lines.
