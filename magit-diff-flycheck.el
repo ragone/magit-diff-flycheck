@@ -85,14 +85,14 @@ is set to the symbol `files'."
 (defun magit-diff-flycheck--setup ()
   "Setup before running."
   (magit-diff-set-context (lambda (_num) magit-diff-flycheck-context))
-  (if magit-diff-flycheck-inhibit-message
-      (setq inhibit-message t)))
+  (when magit-diff-flycheck-inhibit-message
+    (setq inhibit-message t)))
 
 (defun magit-diff-flycheck--teardown ()
   "Teardown after running."
   (magit-diff-default-context)
-  (if magit-diff-flycheck-inhibit-message
-      (setq inhibit-message nil)))
+  (when magit-diff-flycheck-inhibit-message
+    (setq inhibit-message nil)))
 
 (defun magit-diff-flycheck--run ()
   "Run the checkers on the files in the diff buffer."
@@ -126,11 +126,11 @@ is set to the symbol `files'."
   "Remove the filename from ERR, run FN and revert the filename."
   (let ((mode-active (derived-mode-p 'magit-diff-flycheck-error-list-mode))
         (file (flycheck-error-filename err)))
-    (if mode-active
-        (setf (flycheck-error-filename err) nil))
+    (when mode-active
+      (setf (flycheck-error-filename err) nil))
     (apply fn (list err))
-    (if mode-active
-        (setf (flycheck-error-filename err) file))))
+    (when mode-active
+      (setf (flycheck-error-filename err) file))))
 
 (defun magit-diff-flycheck--contained-in-diff-p (err hunk-sections)
   "Return non-nil if ERR is contained in any of the HUNK-SECTIONS."
