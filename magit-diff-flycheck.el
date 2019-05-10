@@ -37,9 +37,13 @@
 (require 'flycheck)
 (require 'seq)
 
+(defgroup magit-diff-flycheck nil
+  "Run Flycheck on Git diffs."
+  :group 'magit-diff)
+
 (defcustom magit-diff-flycheck-inhibit-message t
   "If non-nil, disable message output while running."
-  :group 'magit-diff
+  :group 'magit-diff-flycheck
   :type 'boolean)
 
 (defcustom magit-diff-flycheck-context 0
@@ -47,12 +51,12 @@
 
 This is ignored if `magit-diff-flycheck-default-scope'
 is set to the symbol `files'."
-  :group 'magit-diff
+  :group 'magit-diff-flycheck
   :type 'integer)
 
 (defcustom magit-diff-flycheck-default-scope 'lines
   "The default scope for filtering errors."
-  :group 'magit-diff
+  :group 'magit-diff-flycheck
   :type '(choice (const :tag "Files" files)
                  (const :tag "Lines" lines)))
 
