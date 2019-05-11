@@ -66,8 +66,8 @@ is set to the symbol `files'."
 (defvar magit-diff-flycheck--scope nil
   "The current scope for filtering errors.")
 
-(defvar magit-diff-flycheck--scope-list '(lines
-                                          files)
+(defconst magit-diff-flycheck--scope-list '(lines
+                                            files)
   "The list of scopes for filtering errors.")
 
 ;;;###autoload
