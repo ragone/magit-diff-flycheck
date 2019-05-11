@@ -66,6 +66,9 @@ is set to the symbol `files'."
 (defvar magit-diff-flycheck--scope nil
   "The current scope for filtering errors.")
 
+(defvar-local magit-diff-flycheck--after-syntax-check-function nil
+  "The function to run after syntax check for the current buffer.")
+
 (defconst magit-diff-flycheck--scope-list '(lines
                                             files)
   "The list of scopes for filtering errors.")
@@ -121,13 +124,12 @@ but make the File column wider and sortable.")
 (defun magit-diff-flycheck-file-section (file-section)
   "Run flycheck on FILE-SECTION."
   (let* ((filename (oref file-section value))
-         (buffer (magit-diff-visit-file filename)))
+         (buffer (magit-diff-visit-file filename))
+         (hook-fn (apply-partially #'magit-diff-flycheck--flycheck-collect-errors
+                                   file-section)))
     (with-current-buffer buffer
-      (add-hook 'flycheck-after-syntax-check-hook
-                (apply-partially #'magit-diff-flycheck--flycheck-collect-errors
-                                 file-section)
-                nil
-                t)
+      (add-hook 'flycheck-after-syntax-check-hook hook-fn nil t)
+      (setq magit-diff-flycheck--after-syntax-check-function hook-fn)
       ;; Disable threshold to get all errors
       (setq-local flycheck-checker-error-threshold nil)
       (condition-case nil
@@ -186,8 +188,7 @@ but make the File column wider and sortable.")
     (setq magit-diff-flycheck--current-errors
           (append magit-diff-flycheck--current-errors filtered))
     (remove-hook 'flycheck-after-syntax-check-hook
-                 (apply-partially #'magit-diff-flycheck--flycheck-collect-errors
-                                  file-section)
+                 magit-diff-flycheck--after-syntax-check-function
                  t)
     (flycheck-error-list-refresh)))
 
