@@ -70,6 +70,17 @@ is set to the symbol `files'."
                                             files)
   "The list of scopes for filtering errors.")
 
+(defconst magit-diff-flycheck--error-list-format
+  (apply #'vector (mapcar (lambda (el)
+                            (if (string= (car el) "File")
+                                '("File" 20 t)
+                              el))
+                          flycheck-error-list-format))
+  "Table format for the error list.
+
+Use the format specified by `flycheck-error-list-format'
+but make the File column wider and sortable.")
+
 ;;;###autoload
 (defun magit-diff-flycheck (scope)
   "Run flycheck for SCOPE in `magit-diff-mode'."
@@ -200,7 +211,7 @@ is set to the symbol `files'."
   "Major mode for listing Flycheck errors.
 
 \\{flycheck-error-list-mode-map}"
-  (setq tabulated-list-format flycheck-error-list-format
+  (setq tabulated-list-format magit-diff-flycheck--error-list-format
         tabulated-list-sort-key (cons "File" nil)
         tabulated-list-padding flycheck-error-list-padding
         tabulated-list-entries #'magit-diff-flycheck--error-list-entries
