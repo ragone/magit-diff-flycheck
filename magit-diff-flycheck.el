@@ -76,7 +76,7 @@ is set to the symbol `files'."
 (defconst magit-diff-flycheck--error-list-format
   (apply #'vector (mapcar (lambda (el)
                             (if (string= (car el) "File")
-                                '("File" 20 t)
+                                '("File" 20 magit-diff-flycheck--list-entry-<)
                               el))
                           flycheck-error-list-format))
   "Table format for the error list.
@@ -160,6 +160,22 @@ but make the File column wider and sortable.")
                      (err-line (flycheck-error-line err)))
                 (<= start err-line end)))
             hunk-sections))
+
+(defun magit-diff-flycheck--upcase-filename (err)
+  "Upcase the filename from Flycheck ERR."
+  (let ((filename (flycheck-error-filename err)))
+    (if filename
+        (upcase (file-name-nondirectory filename))
+      "")))
+
+(defun magit-diff-flycheck--list-entry-< (entry1 entry2)
+  "Return non-nil if ENTRY1 comes before ENTRY2."
+  (let ((filename1 (magit-diff-flycheck--upcase-filename (car entry1)))
+        (filename2 (magit-diff-flycheck--upcase-filename (car entry2))))
+    (if (string= filename1 filename2)
+        (flycheck-error-list-entry-< entry1 entry2)
+      (string< filename1 filename2))))
+
 
 (defun magit-diff-flycheck--filter-errors (errors file-section)
   "Filter ERRORS for FILE-SECTION."
