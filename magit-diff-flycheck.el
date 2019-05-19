@@ -5,7 +5,7 @@
 ;; Homepage: https://github.com/ragone/magit-diff-flycheck
 ;; Keywords: convenience, matching
 ;; Package-Version: 0.1.0
-;; Package-Requires: ((magit "2") (flycheck "31") (seq "2") (tabulated-list "1.0") (emacs "25.1"))
+;; Package-Requires: ((magit "2") (flycheck "31") (seq "2") (emacs "25.1"))
 
 ;; This file is not part of GNU Emacs.
 
