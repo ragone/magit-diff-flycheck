@@ -71,11 +71,12 @@ is set to the symbol `files'."
   "The function to run after syntax check for the current buffer.")
 
 (defconst magit-diff-flycheck--error-list-format
-  (apply #'vector (mapcar (lambda (el)
-                            (if (string= (car el) "File")
-                                '("File" 20 magit-diff-flycheck--list-entry-<)
-                              el))
-                          flycheck-error-list-format))
+  (seq-into (seq-map (lambda (el)
+                       (if (string= (car el) "File")
+                           '("File" 20 magit-diff-flycheck--list-entry-<)
+                         el))
+                     flycheck-error-list-format)
+            'vector)
   "Table format for the error list.
 
 Use the format specified by `flycheck-error-list-format'
