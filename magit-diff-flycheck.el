@@ -69,10 +69,6 @@ is set to the symbol `files'."
 (defvar-local magit-diff-flycheck--after-syntax-check-function nil
   "The function to run after syntax check for the current buffer.")
 
-(defconst magit-diff-flycheck--scope-list '(lines
-                                            files)
-  "The list of scopes for filtering errors.")
-
 (defconst magit-diff-flycheck--error-list-format
   (apply #'vector (mapcar (lambda (el)
                             (if (string= (car el) "File")
@@ -85,17 +81,16 @@ Use the format specified by `flycheck-error-list-format'
 but make the File column wider and sortable.")
 
 ;;;###autoload
-(defun magit-diff-flycheck (scope)
+(defun magit-diff-flycheck (&optional scope)
   "Run flycheck for SCOPE in `magit-diff-mode'."
-  (interactive (list (if current-prefix-arg
-                         (intern (completing-read "Scope: "
-                                                  magit-diff-flycheck--scope-list
-                                                  nil
-                                                  t))
-                       magit-diff-flycheck-default-scope)))
+  (interactive (and current-prefix-arg
+                    (list (intern (completing-read "Scope: "
+                                                   '(lines files)
+                                                   nil
+                                                   t)))))
   (unless (derived-mode-p 'magit-diff-mode)
     (user-error "Not in magit-diff-mode"))
-  (setq magit-diff-flycheck--scope scope)
+  (setq magit-diff-flycheck--scope (or scope magit-diff-flycheck-default-scope))
   (magit-diff-flycheck--setup)
   (unwind-protect
       (magit-diff-flycheck--run)
