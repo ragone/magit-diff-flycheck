@@ -33,10 +33,14 @@
 
 ;;; Code:
 
+;;;; Requirements
+
 (require 'magit)
 (require 'flycheck)
 (require 'seq)
 (require 'tabulated-list)
+
+;;;; Customization
 
 (defgroup magit-diff-flycheck nil
   "Run Flycheck on Git diffs."
@@ -61,6 +65,8 @@ is set to the symbol `files'."
   :type '(choice (const :tag "Files" files)
                  (const :tag "Lines" lines)))
 
+;;;; Variables
+
 (defvar magit-diff-flycheck--current-errors nil
   "List of `flycheck-error' for all the buffers.")
 
@@ -82,6 +88,10 @@ is set to the symbol `files'."
 Use the format specified by `flycheck-error-list-format'
 but make the File column wider and sortable.")
 
+;;;; Functions
+
+;;;;; Commands
+
 ;;;###autoload
 (defun magit-diff-flycheck (&optional scope)
   "Run flycheck for SCOPE in `magit-diff-mode'."
@@ -97,6 +107,8 @@ but make the File column wider and sortable.")
   (unwind-protect
       (magit-diff-flycheck--run)
     (magit-diff-flycheck--teardown)))
+
+;;;;; Support
 
 (defun magit-diff-flycheck--setup ()
   "Setup before running."
@@ -173,7 +185,6 @@ but make the File column wider and sortable.")
         (flycheck-error-list-entry-< entry1 entry2)
       (string< filename1 filename2))))
 
-
 (defun magit-diff-flycheck--filter-errors (errors file-section)
   "Filter ERRORS for FILE-SECTION."
   (pcase magit-diff-flycheck--scope
@@ -233,6 +244,8 @@ but make the File column wider and sortable.")
   (advice-add #'flycheck-jump-to-error
               :around #'magit-diff-flycheck--remove-filename)
   (tabulated-list-init-header))
+
+;;;; Footer
 
 (provide 'magit-diff-flycheck)
 
