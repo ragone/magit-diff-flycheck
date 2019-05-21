@@ -1,6 +1,6 @@
 ;;; magit-diff-flycheck.el --- Report errors in diffs -*- lexical-binding: t; -*-
 
-;; Author: Alex Ragone <ragonedk@gmail.com.com>
+;; Author: Alex Ragone <ragonedk@gmail.com>
 ;; Created: 05 May 2019
 ;; Homepage: https://github.com/ragone/magit-diff-flycheck
 ;; Keywords: convenience, matching
