@@ -70,8 +70,20 @@ is set to the symbol `files'."
 (defvar magit-diff-flycheck--current-errors nil
   "List of `flycheck-error' for all the buffers.")
 
+(defvar magit-diff-flycheck--file-sections nil
+  "List of file-sections which are being checked.")
+
+(defvar magit-diff-flycheck--checked 0
+  "Count of file-sections which have been checked.")
+
+(defvar magit-diff-flycheck--progress-reporter nil
+  "The progress reporter.")
+
 (defvar magit-diff-flycheck--scope nil
   "The current scope for filtering errors.")
+
+(defvar magit-diff-flycheck--diff-buffer nil
+  "The Magit Diff buffer.")
 
 (defvar-local magit-diff-flycheck--after-syntax-check-function nil
   "The function to run after syntax check for the current buffer.")
@@ -102,60 +114,106 @@ but make the File column wider and sortable.")
                                                    t)))))
   (unless (derived-mode-p 'magit-diff-mode)
     (user-error "Not in magit-diff-mode"))
-  (setq magit-diff-flycheck--scope (or scope magit-diff-flycheck-default-scope))
-  (magit-diff-flycheck--setup)
-  (unwind-protect
-      (magit-diff-flycheck--run)
-    (magit-diff-flycheck--teardown)))
+  (magit-diff-flycheck--setup (or scope magit-diff-flycheck-default-scope))
+  (magit-diff-flycheck--run))
+
+(defun magit-diff-flycheck-list-errors ()
+  "Show the error list."
+  (interactive)
+  (unless (get-buffer flycheck-error-list-buffer)
+    (with-current-buffer (get-buffer-create flycheck-error-list-buffer)
+      (magit-diff-flycheck-error-list-mode)))
+  (display-buffer flycheck-error-list-buffer)
+  (flycheck-error-list-refresh))
 
 ;;;;; Support
 
-(defun magit-diff-flycheck--setup ()
-  "Setup before running."
+(defun magit-diff-flycheck--setup (scope)
+  "Setup before running for SCOPE."
+  (setq magit-diff-flycheck--checked 0
+        magit-diff-flycheck--file-sections
+        (seq-filter #'magit-file-section-p
+                    (oref magit-root-section children))
+        magit-diff-flycheck--progress-reporter
+        (make-progress-reporter "Running Flycheck on Diff..."
+                                0
+                                (length magit-diff-flycheck--file-sections))
+        magit-diff-flycheck--diff-buffer (current-buffer)
+        magit-diff-flycheck--scope scope)
+  (magit-diff-flycheck-clear-errors)
   (magit-diff-set-context (lambda (_num) magit-diff-flycheck-context))
-  (when magit-diff-flycheck-inhibit-message
-    (setq inhibit-message t)))
+  (magit-diff-flycheck--quiet t))
 
 (defun magit-diff-flycheck--teardown ()
   "Teardown after running."
-  (magit-diff-default-context)
+  (with-current-buffer magit-diff-flycheck--diff-buffer
+    (magit-diff-default-context))
+  (magit-diff-flycheck--quiet nil)
+  (progress-reporter-done magit-diff-flycheck--progress-reporter))
+
+(defun magit-diff-flycheck--quiet (activep)
+  "Set `inhibit-message' to ACTIVEP.
+
+This is ignored if `magit-diff-flycheck-inhibit-message' is nil."
   (when magit-diff-flycheck-inhibit-message
-    (setq inhibit-message nil)))
+    (setq inhibit-message activep)))
 
 (defun magit-diff-flycheck--run ()
   "Run the checkers on the files in the diff buffer."
-  (let ((file-sections (seq-filter #'magit-file-section-p
-                                   (oref magit-root-section children))))
-    (magit-diff-flycheck-clear-errors)
-    (seq-do #'magit-diff-flycheck-file-section file-sections)
-    (magit-diff-flycheck-list-errors)))
+  (seq-do #'magit-diff-flycheck--file-section
+          magit-diff-flycheck--file-sections)
+  (magit-diff-flycheck-list-errors))
 
-(defun magit-diff-flycheck-file-section (file-section)
+(defun magit-diff-flycheck--file-section (file-section)
   "Run flycheck on FILE-SECTION."
   (let* ((filename (oref file-section value))
-         (buffer (magit-diff-visit-file filename))
-         (hook-fn (apply-partially #'magit-diff-flycheck--flycheck-collect-errors
-                                   file-section)))
-    (with-current-buffer buffer
-      (add-hook 'flycheck-after-syntax-check-hook hook-fn nil t)
-      (setq magit-diff-flycheck--after-syntax-check-function hook-fn)
-      ;; Disable threshold to get all errors
-      (setq-local flycheck-checker-error-threshold nil)
-      (condition-case nil
-          (flycheck-buffer)
-        (user-error (kill-buffer))))))
+         (buffer (magit-diff-visit-file filename)))
+    (unless (and buffer
+                 (magit-diff-flycheck--buffer buffer file-section))
+      (magit-diff-flycheck--cleanup))))
+
+(defun magit-diff-flycheck--buffer (buffer file-section)
+  "Run flycheck on BUFFER for FILE-SECTION."
+  (with-current-buffer buffer
+    (magit-diff-flycheck--setup-buffer
+     (apply-partially #'magit-diff-flycheck--flycheck-collect-errors
+                      file-section))
+    (ignore-errors
+      (flycheck-buffer))))
+
+(defun magit-diff-flycheck--setup-buffer (err-fun)
+  "Setup buffer with ERR-FUN."
+    (add-hook 'flycheck-after-syntax-check-hook err-fun nil t)
+    (setq magit-diff-flycheck--after-syntax-check-function err-fun)
+    (setq-local flycheck-checker-error-threshold nil))
+
+(defun magit-diff-flycheck--cleanup ()
+  "Cleanup after running checkers."
+  (remove-hook 'flycheck-after-syntax-check-hook
+               magit-diff-flycheck--after-syntax-check-function
+               t)
+  (setq magit-diff-flycheck--after-syntax-check-function nil
+        magit-diff-flycheck--checked (1+ magit-diff-flycheck--checked))
+  (magit-diff-flycheck--quiet nil)
+  (progress-reporter-update magit-diff-flycheck--progress-reporter
+                            magit-diff-flycheck--checked)
+  (magit-diff-flycheck--quiet t)
+  (switch-to-buffer magit-diff-flycheck--diff-buffer)
+  (unless (magit-diff-flycheck--running-p)
+    (magit-diff-flycheck--teardown)))
 
 (defun magit-diff-flycheck-clear-errors ()
   "Clear the displayed errors."
-  (setq magit-diff-flycheck--current-errors nil))
+  (setq magit-diff-flycheck--current-errors nil)
+  (flycheck-error-list-refresh))
 
-(defun magit-diff-flycheck--remove-filename (fn err)
-  "Remove the filename from ERR, run FN and revert the filename."
+(defun magit-diff-flycheck--remove-filename (oldfun err)
+  "Remove the filename from ERR, run OLDFUN and revert the filename."
   (let ((mode-active (derived-mode-p 'magit-diff-flycheck-error-list-mode))
         (file (flycheck-error-filename err)))
     (when mode-active
       (setf (flycheck-error-filename err) nil))
-    (apply fn (list err))
+    (apply oldfun (list err))
     (when mode-active
       (setf (flycheck-error-filename err) file))))
 
@@ -211,19 +269,15 @@ but make the File column wider and sortable.")
          (filtered (magit-diff-flycheck--filter-errors errors file-section)))
     (setq magit-diff-flycheck--current-errors
           (append magit-diff-flycheck--current-errors filtered))
-    (remove-hook 'flycheck-after-syntax-check-hook
-                 magit-diff-flycheck--after-syntax-check-function
-                 t)
-    (flycheck-error-list-refresh)))
+    (flycheck-error-list-refresh)
+    (magit-diff-flycheck--cleanup)))
 
-(defun magit-diff-flycheck-list-errors ()
-  "Show the error list."
-  (interactive)
-  (unless (get-buffer flycheck-error-list-buffer)
-    (with-current-buffer (get-buffer-create flycheck-error-list-buffer)
-      (magit-diff-flycheck-error-list-mode)))
-  (display-buffer flycheck-error-list-buffer)
-  (flycheck-error-list-refresh))
+(defun magit-diff-flycheck--running-p ()
+  "Return non-nil if the checkers are running.
+
+This will return non-nil if any checkers has not been checked."
+  (/= magit-diff-flycheck--checked
+      (length magit-diff-flycheck--file-sections)))
 
 (defun magit-diff-flycheck--error-list-entries ()
   "Create the entries for the error list."
