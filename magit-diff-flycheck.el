@@ -146,8 +146,8 @@ but make the File column wider and sortable.")
 
 (defun magit-diff-flycheck--teardown ()
   "Teardown after running."
-  (with-current-buffer magit-diff-flycheck--diff-buffer
-    (magit-diff-default-context))
+  (switch-to-buffer magit-diff-flycheck--diff-buffer)
+  (magit-diff-default-context)
   (magit-diff-flycheck--quiet nil)
   (progress-reporter-done magit-diff-flycheck--progress-reporter))
 
@@ -179,13 +179,23 @@ This is ignored if `magit-diff-flycheck-inhibit-message' is nil."
      (apply-partially #'magit-diff-flycheck--flycheck-collect-errors
                       file-section))
     (ignore-errors
-      (flycheck-buffer))))
+      (magit-diff-flycheck--current-buffer-maybe))))
 
 (defun magit-diff-flycheck--setup-buffer (err-fun)
   "Setup buffer with ERR-FUN."
     (add-hook 'flycheck-after-syntax-check-hook err-fun nil t)
     (setq magit-diff-flycheck--after-syntax-check-function err-fun)
     (setq-local flycheck-checker-error-threshold nil))
+
+(defun magit-diff-flycheck--current-buffer-maybe ()
+  "Run flycheck in the current buffer.
+
+Prompt user to enable variable `flycheck-mode' if set to nil."
+  (if (and (not flycheck-mode)
+           (y-or-n-p "Enable flycheck? "))
+    (flycheck-mode t))
+  (flycheck-buffer-deferred)
+  (flycheck-buffer))
 
 (defun magit-diff-flycheck--cleanup ()
   "Cleanup after running checkers."
@@ -198,7 +208,6 @@ This is ignored if `magit-diff-flycheck-inhibit-message' is nil."
   (progress-reporter-update magit-diff-flycheck--progress-reporter
                             magit-diff-flycheck--checked)
   (magit-diff-flycheck--quiet t)
-  (switch-to-buffer magit-diff-flycheck--diff-buffer)
   (unless (magit-diff-flycheck--running-p)
     (magit-diff-flycheck--teardown)))
 
