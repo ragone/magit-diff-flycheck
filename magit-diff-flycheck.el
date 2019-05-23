@@ -183,9 +183,9 @@ This is ignored if `magit-diff-flycheck-inhibit-message' is nil."
 
 (defun magit-diff-flycheck--setup-buffer (err-fun)
   "Setup buffer with ERR-FUN."
-    (add-hook 'flycheck-after-syntax-check-hook err-fun nil t)
-    (setq magit-diff-flycheck--after-syntax-check-function err-fun)
-    (setq-local flycheck-checker-error-threshold nil))
+  (add-hook 'flycheck-after-syntax-check-hook err-fun nil t)
+  (setq magit-diff-flycheck--after-syntax-check-function err-fun)
+  (setq-local flycheck-checker-error-threshold nil))
 
 (defun magit-diff-flycheck--current-buffer-maybe ()
   "Run flycheck in the current buffer.
@@ -194,20 +194,20 @@ Prompt user to enable variable `flycheck-mode' if set to nil."
   (if (and (not flycheck-mode)
            (y-or-n-p "Enable flycheck? "))
     (flycheck-mode t))
-  (flycheck-buffer-deferred)
   (flycheck-buffer))
 
 (defun magit-diff-flycheck--cleanup ()
   "Cleanup after running checkers."
-  (remove-hook 'flycheck-after-syntax-check-hook
-               magit-diff-flycheck--after-syntax-check-function
-               t)
-  (setq magit-diff-flycheck--after-syntax-check-function nil
-        magit-diff-flycheck--checked (1+ magit-diff-flycheck--checked))
-  (magit-diff-flycheck--quiet nil)
-  (progress-reporter-update magit-diff-flycheck--progress-reporter
-                            magit-diff-flycheck--checked)
-  (magit-diff-flycheck--quiet t)
+  (when magit-diff-flycheck--after-syntax-check-function
+    (remove-hook 'flycheck-after-syntax-check-hook
+                 magit-diff-flycheck--after-syntax-check-function
+                 t)
+    (setq magit-diff-flycheck--after-syntax-check-function nil
+          magit-diff-flycheck--checked (1+ magit-diff-flycheck--checked))
+    (magit-diff-flycheck--quiet nil)
+    (progress-reporter-update magit-diff-flycheck--progress-reporter
+                              magit-diff-flycheck--checked)
+    (magit-diff-flycheck--quiet t))
   (unless (magit-diff-flycheck--running-p)
     (magit-diff-flycheck--teardown)))
 
