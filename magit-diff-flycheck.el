@@ -195,8 +195,9 @@ Prompt user to enable variable `flycheck-mode' if set to nil."
              (flycheck-may-enable-mode)
              (y-or-n-p "Enable Flycheck? "))
     (flycheck-mode t))
-  (or (flycheck-buffer)
-      t))
+  (when (flycheck-get-checker-for-buffer)
+    (or (flycheck-buffer)
+        t)))
 
 (defun magit-diff-flycheck--cleanup ()
   "Cleanup after running checkers."
