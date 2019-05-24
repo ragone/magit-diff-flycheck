@@ -178,7 +178,7 @@ This is ignored if `magit-diff-flycheck-inhibit-message' is nil."
     (magit-diff-flycheck--setup-buffer
      (apply-partially #'magit-diff-flycheck--flycheck-collect-errors
                       file-section))
-    (ignore-errors
+    (with-demoted-errors "Diff Flycheck Error: %S"
       (magit-diff-flycheck--current-buffer-maybe))))
 
 (defun magit-diff-flycheck--setup-buffer (err-fun)
@@ -191,10 +191,12 @@ This is ignored if `magit-diff-flycheck-inhibit-message' is nil."
   "Run flycheck in the current buffer.
 
 Prompt user to enable variable `flycheck-mode' if set to nil."
-  (if (and (not flycheck-mode)
-           (y-or-n-p "Enable flycheck? "))
+  (when (and (not flycheck-mode)
+             (flycheck-may-enable-mode)
+             (y-or-n-p "Enable Flycheck? "))
     (flycheck-mode t))
-  (flycheck-buffer))
+  (or (flycheck-buffer)
+      t))
 
 (defun magit-diff-flycheck--cleanup ()
   "Cleanup after running checkers."
