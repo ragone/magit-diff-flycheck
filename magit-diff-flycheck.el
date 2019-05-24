@@ -130,6 +130,7 @@ but make the File column wider and sortable.")
 
 (defun magit-diff-flycheck--setup (scope)
   "Setup before running for SCOPE."
+  (magit-diff-set-context (lambda (_cur) magit-diff-flycheck-context))
   (setq magit-diff-flycheck--checked 0
         magit-diff-flycheck--file-sections
         (seq-filter #'magit-file-section-p
@@ -141,7 +142,6 @@ but make the File column wider and sortable.")
         magit-diff-flycheck--diff-buffer (current-buffer)
         magit-diff-flycheck--scope scope)
   (magit-diff-flycheck-clear-errors)
-  (magit-diff-set-context (lambda (_num) magit-diff-flycheck-context))
   (magit-diff-flycheck--quiet t))
 
 (defun magit-diff-flycheck--teardown ()
