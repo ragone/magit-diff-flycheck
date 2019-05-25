@@ -11,6 +11,9 @@ not want to see errors for the whole file but only for the added/modified
 lines.
 
 * Install
+
+Available on [[https://melpa.org/#/magit-diff-flycheck][MELPA]].
+
 ** Main dependencies
 + ~magit~
 + ~flycheck~
